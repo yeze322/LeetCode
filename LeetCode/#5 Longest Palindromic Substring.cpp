@@ -38,8 +38,38 @@ public:
 		return s.substr(recordI - maxLen + 1, maxLen);
 	}
 };
-int f1;
-int f2;
+
+class Solution2 {
+public:
+	string longestPalindrome(string s) {
+		int LEN = s.size();
+		int startIndex = 0;
+		int maxLen = 0;
+		for (int i = 0; i < LEN;){
+			int start = i++;
+			while (s[i] == s[start]) i++;
+			int end = i;
+			start--;
+			while (start >= 0 && end < LEN){
+				if (s[start] != s[end]){
+					break;
+				}
+				start--;
+				end++;
+			}
+			int subLen = end - start - 1;
+			if (subLen > maxLen){
+				startIndex = start + 1;
+				maxLen = subLen;
+			}
+		}
+		return s.substr(startIndex,maxLen);
+	}
+};
+/*
+Solution 2 is faster than solution 1. Because I use a stupid method in Solution1...
+ */
+
 int main(){
 	Solution t;
 	string input = "civilwartestingwhetherthatnaptionoranynartionsoconceivedandsodedicatedcanlongendureWeareqmetonagreatbattlefiemldoftzhatwarWehavecometodedicpateaportionofthatfieldasafinalrestingplaceforthosewhoheregavetheirlivesthatthatnationmightliveItisaltogetherfangandproperthatweshoulddothisButinalargersensewecannotdedicatewecannotconsecratewecannothallowthisgroundThebravelmenlivinganddeadwhostruggledherehaveconsecrateditfaraboveourpoorponwertoaddordetractTgheworldadswfilllittlenotlenorlongrememberwhatwesayherebutitcanneverforgetwhattheydidhereItisforusthelivingrathertobededicatedheretotheulnfinishedworkwhichtheywhofoughtherehavethusfarsonoblyadvancedItisratherforustobeherededicatedtothegreattdafskremainingbeforeusthatfromthesehonoreddeadwetakeincreaseddevotiontothatcauseforwhichtheygavethelastpfullmeasureofdevotionthatweherehighlyresolvethatthesedeadshallnothavediedinvainthatthisnationunsderGodshallhaveanewbirthoffreedomandthatgovernmentofthepeoplebythepeopleforthepeopleshallnotperishfromtheearth";
