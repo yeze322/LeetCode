@@ -236,7 +236,7 @@ namespace Microsoft.BingAds.SCP.SampleApp
     {
         public const int maxOutgoing = 1000;
         public String sectionName = "TransplantObserver";
-        public testConfig TESTCONFIG = new testConfig("100 5 1 0");
+        public testConfig TESTCONFIG = new testConfig(100,1);
         public struct CounterSet
         {
             public IPerfCounter sentRate;
@@ -277,7 +277,7 @@ namespace Microsoft.BingAds.SCP.SampleApp
         public override void Run(RuntimeContext context, IChannel channel)
         {
             HydraClientBenchmark clientBenchmark = new HydraClientBenchmark(TESTCONFIG.maxOutgoing);
-            clientBenchmark.Start(TESTCONFIG.threadNum, TESTCONFIG.ifDumplicatedTest);
+            clientBenchmark.Start(TESTCONFIG.threadNum);
             while (true)
             {
                 Observer observer = clientBenchmark.Get();

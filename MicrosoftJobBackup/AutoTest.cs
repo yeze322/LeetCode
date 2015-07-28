@@ -18,52 +18,22 @@ namespace Microsoft.BingAds.SCP.Hydra
     public class testConfig
     {
         public int maxOutgoing;
-        public int parrTopology;
+        //public int parrTopology;
         public int threadNum;
-        public bool ifDumplicatedTest;
-        #region Set()
-        private void Set(int a = 100, int b = 5, int c = 1, int d = 0)
+        public const int paraNums = 2;
+        public const string configFileSuffix = "config";
+        public const char configFileSeparator = '.';
+        public testConfig(int maxOG = 100, int tNum = 1)
         {
-            maxOutgoing = a;
-            parrTopology = b;
-            threadNum = c;
-            ifDumplicatedTest = (d == 0);
+            maxOutgoing = maxOG;
+            threadNum = tNum;
         }
-        private void Set(string[] bits)
-        {
-            if (bits.Length != 4)
-            {
-                Logger.Log("Wrong config string, need 4 parameters. This config was set to default.");
-                this.Set();
-            }
-            else
-            {
-                try { this.Set(int.Parse(bits[0]), int.Parse(bits[1]), int.Parse(bits[2]), int.Parse(bits[3])); }
-                catch
-                {
-                    Logger.Log("Error in parsing string to number, format doesn't match");
-                    this.Set();
-                }
-            }
-        }
-        public void Set(string str) { this.Set(str.Split(' ')); }
-        #endregion
-
-        #region constructors
-        public testConfig(int maxOG = 100, int pTP = 5, int tNM = 1, int DpT = 0) { this.Set(maxOG, pTP, tNM, DpT); }
-        public testConfig(string[] bits) { this.Set(bits); }
-        public testConfig(string str)
-        {
-            var bits = str.Split(' ');
-            this.Set(bits);
-        }
-        #endregion
         //e.g. config = "100 5 1 0" -> filename = [0]mGo100tNum1topo5Dump_false.txt
         //mGo = maxOutgoing; tNum = threadNum; topo = topologyNum; Dump_ = ifDumpicated
         //feature is used to give file a special mark, avoid dumplicated fnames
         public String GenerateFileName(string feature = "default")
         {
-            String ret = "mGo" + maxOutgoing.ToString() + "tNum" + threadNum.ToString() + "topo" + parrTopology.ToString() + "Dump_" + ifDumplicatedTest.ToString() + ".txt";
+            String ret = "mGo" + maxOutgoing.ToString() + "tNum" + threadNum.ToString() + ".txt";
             if (feature != null)
             {
                 return "[" + feature + "]" + ret;
@@ -74,40 +44,61 @@ namespace Microsoft.BingAds.SCP.Hydra
 
     public class AutoTest
     {
-        public List<testConfig> testConfigSet = new List<testConfig>();
-        public string testName = "default";
-        public int totalTime;
-        public int intervalTime;
+        /// <summary>
+        /// AutoTest is used to run a test under one config file.
+        /// Generally, you need to input a *.config file which contains lines of (int,int) as (maxOutgoing, threadNumbers)
+        /// </summary>
+        
+        private string testName;
+        // You can define your own testName which will influence the output file path
+        // (By default, the testName is set to the config files' preffix.)
+        // For example: config file name is - test1.config, then a folder named "test1" will be created whitch is used to save your outputs
+        // The output's root path can also be influenced in the method Run() by changing the second parameter 'outputPath'
+        private int totalTime;
+        private int intervalTime;
+        
+        private List<testConfig> testConfigSet = new List<testConfig>();
+        //there is a handler usally binded on "Console.Write", u can modify it to adjust different output requirements
+        private delegate void handler(string str, params object[] paras);
+        private handler REPORTER = new handler(Console.WriteLine);
+
+        private void __ReadFileToConfigList(string fname)
+        {
+            if (!File.Exists(fname))
+            {
+                REPORTER("Config file doesn't exist!");
+                return;
+            }
+            TextReader reader = File.OpenText(fname);
+            string line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                string[] bits = line.Split(' ');
+                if (bits.Length == testConfig.paraNums)
+                {
+                    int maxOutgoing = int.Parse(bits[0]);
+                    int threadNumber = int.Parse(bits[1]);
+                    testConfigSet.Add(new testConfig());
+                }
+            }
+            reader.Close();
+        }
+
         public AutoTest(String configFileName, int totalTime, int intervalTime, string testName = null)
         {
             this.totalTime = totalTime;
             this.intervalTime = intervalTime;
             this.testName = testName;
-            Console.WriteLine("[Config Filename] : {0}", configFileName);
+            REPORTER("[Load Config File] :" + configFileName);
             if (testName == null)
             {
                 string[] split = configFileName.Split('/');
+                //testname is set as config file name by default
                 this.testName = split[split.Length - 1].Split('.')[0];
             }
-            if (File.Exists(configFileName))
-            {
-                TextReader reader = File.OpenText(configFileName);
-                string line;
-                while ((line = reader.ReadLine()) != null)
-                {
-                    string[] bits = line.Split(' ');
-                    if (bits.Length == 4)
-                    {
-                        testConfigSet.Add(new testConfig(bits));
-                    }
-                }
-                reader.Close();
-            }
-            else
-            {
-                Console.WriteLine("Config file doesn't exist!");
-            }
+            __ReadFileToConfigList(configFileName);
         }
+
         public void StartSingleTest(string filepath, int index, int totalTestSeconds = 10000, int recordInterval = 500)
         {
             testConfig config = testConfigSet[index];
@@ -118,20 +109,21 @@ namespace Microsoft.BingAds.SCP.Hydra
             }
             TextWriter fwrite = File.CreateText(filepath + config.GenerateFileName(index.ToString()));
             HydraClientBenchmark clientBenchmark = new HydraClientBenchmark(config.maxOutgoing);
-            clientBenchmark.Start(config.threadNum, config.ifDumplicatedTest);
+            clientBenchmark.Start(config.threadNum);
             Thread.Sleep(3000); //record after 3 second
             for (int i = 0; i < recordTimes; i++)
             {
                 clientBenchmark.DumpToFile(fwrite);
-                Console.WriteLine("{0}/{1}", i, recordTimes);
+                REPORTER("{0}/{1}", i + 1, recordTimes);
                 Thread.Sleep(recordInterval); //get every second
             }
             fwrite.Close();
             clientBenchmark.KillAllThread();
         }
-        public void Run(string mode = TestRunMode.SingleThread, string path = "D:/HydraAutoTest/")
+
+        public void Run(string mode = TestRunMode.SingleThread, string outputPath = "D:/HydraAutoTest/")
         {
-            string filepath = path + testName + "/" + mode + "/";
+            string filepath = outputPath + testName + "/" + mode + "/";
             List<Thread> threadLists = new List<Thread>();
             for (int i = 0; i < testConfigSet.Count; i++)
             {
@@ -140,13 +132,13 @@ namespace Microsoft.BingAds.SCP.Hydra
             }
             if (mode == TestRunMode.Parrallel)
             {
-                Console.WriteLine("Parrallel mode start!");
+                REPORTER("Parrallel mode start!");
                 foreach (Thread t in threadLists) t.Start();
                 foreach (Thread t in threadLists) t.Join();
             }
             else if (mode == TestRunMode.SingleThread)
             {
-                Console.WriteLine("Single thread mode start!");
+                REPORTER("Single thread mode start!");
                 foreach (Thread t in threadLists) { t.Start(); t.Join(); }
             }
         }

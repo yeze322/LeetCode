@@ -41,10 +41,10 @@ namespace Microsoft.BingAds.SCP.Hydra
                 t.Abort();
             }
         }
-        public void Start(int parr = 1, bool ifDumplicatedTest = false)
+        public void Start(int parr = 1)
         {
             for (int i = 0; i < parr; i++)
-                this.threadSet.Add(new Thread(() => SendRequestThreadEntry(ifDumplicatedTest)));
+                this.threadSet.Add(new Thread(() => SendRequestThreadEntry()));
             foreach (Thread x in this.threadSet)
             {
                 x.Start();
@@ -65,14 +65,14 @@ namespace Microsoft.BingAds.SCP.Hydra
             }
         }
         // request function, thread function
-        private void SendRequestThreadEntry(bool ifDumplicatedTest = false)
+        private void SendRequestThreadEntry()
         {
             Logger.LogInfo(LogId, "HydraBenchmark", "Start send request thread");
             //IHydraClient client = new HydraClient("HydraBenchmark.ini");
             IHydraClient client = new HydraClient(Path.Combine(workingDir, "HydraClientExampleManaged.ini"), Path.Combine(workingDir, "HydraCluster.ini"));
-            HydraPutRequest putRequest = this.constRequest;
             while (true)
             {
+                HydraPutRequest putRequest = new HydraPutRequest();
                 while (!this.outgoingRequestPool.WaitOne(30000))
                 {
                     Logger.LogWarning(LogId, "HydraBenchmark", "Max outgoing in 30 seconds!");
@@ -89,17 +89,7 @@ namespace Microsoft.BingAds.SCP.Hydra
 
                 try
                 {
-                    if (ifDumplicatedTest)
-                    {
-                        constRequest.token = Guid.NewGuid().ToString();//refresh it, or it will be success
-                        client.BeginPut(constRequest, callback, null);
-                    }
-                    else
-                    {
-                        putRequest = new HydraPutRequest();
-                        client.BeginPut(putRequest, callback, null);
-                    }
-
+                    client.BeginPut(putRequest, callback, null);
                     this.sendCounter.Increment();
                 }
                 catch (Exception e)
@@ -133,7 +123,7 @@ namespace Microsoft.BingAds.SCP.Hydra
         public void DumpToFile(TextWriter writer)
         {
             var ret = this.Get();
-            writer.WriteLine("{0} {d1}", ret.sendRate, ret.latency);
+            writer.WriteLine("{0} {1}", ret.sendRate, ret.latency);
         }
     }
 }
