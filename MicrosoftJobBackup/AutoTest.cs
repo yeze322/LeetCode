@@ -17,12 +17,14 @@ namespace Microsoft.BingAds.SCP.Hydra
 
     public class testConfig
     {
+        public const string configFileSuffix = "config";
+        public const char configFileSeparator = '.';
+        public const int paraNums = 2;
+        
         public int maxOutgoing;
         //public int parrTopology;
         public int threadNum;
-        public const int paraNums = 2;
-        public const string configFileSuffix = "config";
-        public const char configFileSeparator = '.';
+
         public testConfig(int maxOG = 100, int tNum = 1)
         {
             maxOutgoing = maxOG;
@@ -48,7 +50,7 @@ namespace Microsoft.BingAds.SCP.Hydra
         /// AutoTest is used to run a test under one config file.
         /// Generally, you need to input a *.config file which contains lines of (int,int) as (maxOutgoing, threadNumbers)
         /// </summary>
-        
+
         private string testName;
         // You can define your own testName which will influence the output file path
         // (By default, the testName is set to the config files' preffix.)
@@ -56,7 +58,7 @@ namespace Microsoft.BingAds.SCP.Hydra
         // The output's root path can also be influenced in the method Run() by changing the second parameter 'outputPath'
         private int totalTime;
         private int intervalTime;
-        
+        private StreamConfig streamConfig;
         private List<testConfig> testConfigSet = new List<testConfig>();
         //there is a handler usally binded on "Console.Write", u can modify it to adjust different output requirements
         private delegate void handler(string str, params object[] paras);
@@ -84,8 +86,9 @@ namespace Microsoft.BingAds.SCP.Hydra
             reader.Close();
         }
 
-        public AutoTest(String configFileName, int totalTime, int intervalTime, string testName = null)
+        public AutoTest(StreamConfig streamSettings, String configFileName, int totalTime, int intervalTime, string testName = null)
         {
+            this.streamConfig = streamSettings;
             this.totalTime = totalTime;
             this.intervalTime = intervalTime;
             this.testName = testName;
@@ -108,8 +111,9 @@ namespace Microsoft.BingAds.SCP.Hydra
                 Directory.CreateDirectory(filepath);
             }
             TextWriter fwrite = File.CreateText(filepath + config.GenerateFileName(index.ToString()));
-            HydraClientBenchmark clientBenchmark = new HydraClientBenchmark(config.maxOutgoing);
-            clientBenchmark.Start(config.threadNum);
+            //!!!!
+            HydraClientBenchmark clientBenchmark = new HydraClientBenchmark(config.maxOutgoing, new KeyValueStreams(this.streamConfig));
+            clientBenchmark.Start();
             Thread.Sleep(3000); //record after 3 second
             for (int i = 0; i < recordTimes; i++)
             {

@@ -15,9 +15,9 @@ namespace Microsoft.BingAds.SCP.Hydra
     {
         public static readonly CustomLogID LogId = new CustomLogID("HydraBenchmark");
         private List<Thread> threadSet = new List<Thread>();
+        private KeyValueStreams reqStream;
         private String workingDir;
         private Semaphore outgoingRequestPool;
-        private HydraPutRequest constRequest;
 
         private HydraBenchmarkRateCounter sendCounter = new HydraBenchmarkRateCounter("SendRate");
         private HydraBenchmarkRateCounter successCounter = new HydraBenchmarkRateCounter("SuccessRate");
@@ -28,12 +28,24 @@ namespace Microsoft.BingAds.SCP.Hydra
 
         private HydraBenchmarkNumCounter latencyCounter = new HydraBenchmarkNumCounter("Latency");
 
-        public HydraClientBenchmark(int maxOutgoing)
+        private void __Init(int maxOutgoing)
         {
             this.outgoingRequestPool = new Semaphore(maxOutgoing, maxOutgoing);
             workingDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            this.constRequest = new HydraPutRequest();
         }
+
+        public HydraClientBenchmark(int maxOutgoing)
+        {
+            __Init(maxOutgoing);
+            this.reqStream = new KeyValueStreams(new StreamConfig());
+        }
+
+        public HydraClientBenchmark(int maxOutgoing, KeyValueStreams stream)
+        {
+            __Init(maxOutgoing);
+            this.reqStream = stream;
+        }
+        
         public void KillAllThread()
         {
             foreach (Thread t in threadSet)
@@ -72,7 +84,8 @@ namespace Microsoft.BingAds.SCP.Hydra
             IHydraClient client = new HydraClient(Path.Combine(workingDir, "HydraClientExampleManaged.ini"), Path.Combine(workingDir, "HydraCluster.ini"));
             while (true)
             {
-                HydraPutRequest putRequest = new HydraPutRequest();
+                HydraPutRequest putRequest = this.reqStream.GetOne();
+
                 while (!this.outgoingRequestPool.WaitOne(30000))
                 {
                     Logger.LogWarning(LogId, "HydraBenchmark", "Max outgoing in 30 seconds!");
