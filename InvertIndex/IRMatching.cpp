@@ -1,4 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
+#define __main__
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -78,7 +79,7 @@ public:
 
 	void print(){
 		using namespace std;
-		cout << adId << " " << actualAdTitle << endl;
+		cout << adId << "|" << actualAdTitle << "|"<< exactBid<< endl;
 	}
 
 private:
@@ -163,11 +164,11 @@ public:
 			vector<string>& textKeywords = get<2>(keyWordsTuple);
 
 			createIndex_BidKeywords(bidKeywords, adsItem);
-			//createIndex_AdTitileKeywords(titleKeywords, adsItem);
-			//createIndex_AdTextKeywords(textKeywords, adsItem);
+			createIndex_AdTitileKeywords(titleKeywords, adsItem);
+			createIndex_AdTextKeywords(textKeywords, adsItem);
 		}
 	}
-	/* forbid copy constructor and assignment*/
+	/* forbid copy constructor and assignment */
 	AdsInvertIndex(const AdsInvertIndex&) = delete;
 	void operator = (const AdsInvertIndex&) = delete;
 	/* search functions */
@@ -178,7 +179,7 @@ public:
 		else{
 			auto ret = iter->second;
 			//need to improve sort function
-			std::sort(ret.begin(),ret.end());
+			std::sort(ret.begin(), ret.end(), [](AdsItem* & const lhs, AdsItem* & const rhs)->bool{return lhs->exactBid > rhs->exactBid; });
 			if (ret.size() > i)
 				ret.resize(i);
 			return ret;
@@ -286,6 +287,7 @@ vector<AdsItem> stringToAds(const string &fname, int maxItem = 0){
 	return allAds;
 }
 
+#ifdef __main__
 int main() {
 	using namespace std;
 
@@ -293,7 +295,7 @@ int main() {
 	clock_t begin, end;
 	//1
 	begin = clock();
-	auto adsLines = loadFromFile(filename);
+	auto adsLines = loadFromFile(filename,10000);
 	end = clock();
 	cout << end - begin << endl;
 	//2
@@ -318,3 +320,4 @@ int main() {
 	}
 	return 0;
 }
+#endif
