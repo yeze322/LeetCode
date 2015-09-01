@@ -38,7 +38,7 @@ def invertIndexFind(wordStr, lineNum = 10):
 				continue
 			ret.append(lis[i])
 			count -= 1
-			if count == 0:
+			if count == 1:
 				return ret
 	return ret
 
