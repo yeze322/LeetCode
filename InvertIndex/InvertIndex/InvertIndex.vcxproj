@@ -70,7 +70,6 @@
   <ItemGroup>
     <ClInclude Include="AdsInvertIndex.h" />
     <ClInclude Include="AdsItem.h" />
-    <ClInclude Include="JasonParser.h" />
     <ClInclude Include="RuntimeMethods.h" />
     <ClInclude Include="ServerService.h" />
   </ItemGroup>

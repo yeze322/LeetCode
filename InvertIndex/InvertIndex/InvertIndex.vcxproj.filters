@@ -24,9 +24,6 @@
     <ClInclude Include="RuntimeMethods.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="JasonParser.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ServerService.h">
       <Filter>Header Files</Filter>
     </ClInclude>

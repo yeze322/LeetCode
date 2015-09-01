@@ -10,7 +10,6 @@
 #include "AdsItem.h"
 #include "AdsInvertIndex.h"
 #include "RuntimeMethods.h"
-#include "JasonParser.h"
 
 using std::string;
 using std::vector;
@@ -31,18 +30,17 @@ int main(int argc, char ** argv){
 	
 	string outputDir = "C:/Users/v-zeye/Desktop/ZhangLiangjie/INDEX";
 	IRINDEX->writeToFile(outputDir);
-	//create socket and bind and deal with jason.
-	//using rapidjason
-
-	//int count = 0;
-	//string q;
-	//while (true){
-	//	cin >> q;
-	//	if (q == "-quit") break;
-	//	auto ret = IRINDEX->search(q, 10);
-	//	for (auto & x: ret){
-	//		x->print();
-	//	}
-	//}
+	/*
+	int count = 0;
+	string q;
+	while (true){
+		cin >> q;
+		if (q == "-quit") break;
+		auto ret = IRINDEX->search(q, 10);
+		for (auto & x: ret){
+			x->print();
+		}
+	}
+	*/
 	return 0;
 }

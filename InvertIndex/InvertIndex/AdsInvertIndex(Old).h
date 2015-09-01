@@ -18,21 +18,14 @@
 
 #include "AdsItem.h"
 using namespace std;
-#define PI 3.14159265
 
 class AdsInvertIndex{
 public:
 	/* save invert index */
 	unordered_map<string, vector<AdsItem*>> adsMap;
 	/* constructor */
-	AdsInvertIndex(vector<AdsItem>* adsPtr) : Weight(100, 10, 1), bidWeight(0.1, 0.2, 0.7){
+	AdsInvertIndex(vector<AdsItem>* adsPtr) : Weight(100, 10, 1){
 		addAdsSet(*adsPtr);
-		for (auto & iter : this->adsMap){
-			auto & arr = iter.second;
-			normalizeScore(arr);
-			sort(arr.begin(), arr.end(),
-				[](AdsItem* & const lhs, AdsItem* & const rhs)->bool{return lhs->score > rhs->score; });
-		}
 	}
 	void addAdsSet(vector<AdsItem>& ads){
 		using std::get;
@@ -66,34 +59,26 @@ public:
 		}
 	}
 
-	/*normalize all scores*/
-	void normalizeScore(vector<AdsItem*>& ads) {
-		for (auto & adsItem : ads){
-			//x = x * atan(pow(x, -0.5));
-			adsItem->score = atan(adsItem->score) * 2 / PI;
-			//adsItem->score = pow(sqrt(adsItem->score), -1);
-		}
-	}
-
 private:
+	/* put differnt type of keywords into map */
 	/*!!!wating for adding different rules*/
 	void createIndex_BidKeywords(vector<string>& bidKws, AdsItem &item){
-		item.score = rateAdsItem(item, this->bidWeight);
 		for (auto & x : bidKws){
+			item.score = rateAdsItem(item, Weight.fromBid);
 			addToAdsMap(x, item);
 		}
 	}
 
 	void createIndex_AdTitileKeywords(vector<string>& titleKws, AdsItem &item){
 		for (auto & x : titleKws){
-			//		item.score = rateAdsItem(item, this->Weight.fromTitle);
+			item.score = rateAdsItem(item, this->Weight.fromTitle);
 			addToAdsMap(x, item);
 		}
 	}
 
 	void createIndex_AdTextKeywords(vector<string>& textKws, AdsItem &item){
 		for (auto & x : textKws){
-			//		item.score = rateAdsItem(item, this->Weight.fromText);
+			item.score = rateAdsItem(item, this->Weight.fromText);
 			addToAdsMap(x, item);
 		}
 	}
@@ -132,17 +117,9 @@ private:
 		KeywordsWeight(double a, double b, double c) :fromBid(a), fromTitle(b), fromText(c){}
 	}Weight;
 
-	struct BitWeight{
-		double exactBid;
-		double phraseBid;
-		double broadBid;
-		BitWeight(double a, double b, double c) :exactBid(a), phraseBid(b), broadBid(c){}
-	}bidWeight;
-
 	/*rating function*/
-	double rateAdsItem(AdsItem& item, BitWeight weight){
-		double score = item.exactBid * weight.exactBid + item.phraseBid * weight.phraseBid + item.broadBid * weight.broadBid;
-		return score;
+	double rateAdsItem(AdsItem& item, double weight){
+		return 0;
 	}
 
 	/*sort's compare function implementation*/
@@ -160,7 +137,7 @@ public:
 
 		char s[100];
 		string errfile = outputDir + "ErrorWords.csv";
-		FILE *ferr = fopen(errfile.c_str(), "w");
+		FILE *ferr= fopen(errfile.c_str(), "w");
 		for (auto & pair : this->adsMap){
 			string fname = outputDir + pair.first;
 			FILE *fp = fopen(fname.c_str(), "w");
@@ -171,7 +148,7 @@ public:
 			else{
 				assert(fp != NULL);
 				for (auto ptr : pair.second){
-					sprintf(s, "{\"ListingId\" : %s, \"AdId\" : %s, \"Score\" : \%.5f\}\n", ptr->listingId.c_str(), ptr->adId.c_str(), ptr->score);
+					sprintf(s, "{\"%s\" : \"%d\"}\n", ptr->listingId.c_str(), ptr->score);
 					fwrite(s, sizeof(char), strlen(s), fp);
 				}
 				fclose(fp);

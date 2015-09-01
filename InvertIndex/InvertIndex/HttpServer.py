@@ -1,29 +1,25 @@
 import socketserver
 import os
-import linecache
-import sys
+import IRlib
+from time import gmtime, strftime
 
 class MyTCPHandler(socketserver.BaseRequestHandler):
-	path = "C:/Users/v-zeye/Desktop/ZhangLiangjie/INDEX/"
 	def handle(self):
-		self.data = self.request.recv(1024).strip()
+		self.data = self.request.recv(2048)
+		print (strftime("%a, %d %b %Y %H:%M:%S +0000", gmtime()))
 		print("[{}] received : {}".format(self.client_address[0], self.data))
 		word = self.data.decode("utf-8")
-		resp = self.invertIndexFind(word)
-		self.request.sendall(self.ListToBytes(resp))
+		start = word.find('{"query"')
+		word = word[start:]
+		print("Match Json = {}".format(word))
+		sendStr = IRlib.GetJsonResponse(word)
+		self.request.sendall(sendStr)
+		print ("[Send] : {}\n".format(sendStr))
 
-	def invertIndexFind(self, word, lineNum = 10):
-		fname = self.path + str(word)
-		if(os.path.isfile(fname)):
-			ret = [line for line in [linecache.getline(fname,i).strip() for i in range(1,lineNum+1)] if line != ""]
-			return ret
-
-	def ListToBytes(self, resp):
-		return str.encode(str(resp))
 
 
 if __name__ == "__main__":
-    HOST, PORT = "localhost", 9595
+    HOST, PORT = "0.0.0.0", 9595
 
     # Create the server, binding to localhost on port 9999
     server = socketserver.TCPServer((HOST, PORT), MyTCPHandler)

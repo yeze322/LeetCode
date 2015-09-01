@@ -68,7 +68,7 @@ public:
 
 	void print(){
 		using namespace std;
-		cout << adId << "|" << actualAdTitle << "|" << exactBid << endl;
+		cout << adId << "|" << actualAdTitle <<"|"<< actualAdTitle << "|" << exactBid << endl;
 	}
 
 private:
